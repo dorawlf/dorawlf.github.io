@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="en">
+    <head>
+        <title>For Honey Moon</title>
+        <meta charset="UTF-8">
+        <link href="lib/css/custom-theme/jquery-ui-1.9.2.custom.min.css" rel="stylesheet">
+        <script src="lib/js/jquery-1.8.3.min.js"></script>
+        <script src="lib/js/jquery-ui-1.9.2.custom.min.js"></script>
+        <script src="lib/js/jquery.jplayer.min.js"></script>
+        <script>		
+            //右键事件函数
+            if (window.Event){
+                document.captureEvents(Event.MOUSEUP);
+                function nocontextmenu(){
+                    event.cancelBubble = true
+                    event.returnValue = false;
+                    return false;
+                 }		 
+                function norightclick(e){
+                    if (window.Event){
+                        if (e.which == 2 || e.which == 3)
+                        return false;
+                    }else if (event.button == 2 || event.button == 3){
+                        event.cancelBubble = true
+                        event.returnValue = false;
+                        return false;
+                    }
+                }
+                document.oncontextmenu = nocontextmenu; 
+                document.onmousedown = norightclick; 
+            }
+
+            //accordion函数
+            $(function() {
+                $( "#tabs" ).accordion({
+                    change: function(event, ui) {  
+                        $("#player").jPlayer("stop");
+                        var index = $( "#tabs" ).accordion( "option", "active" );
+                        if (0==index){
+                            $(player).jPlayer("setMedia", {
+                                mp3: "lib/music/00.mp3"});
+                        }
+                        if (1==index){
+                            $(player).jPlayer("setMedia", {
+                                mp3: "lib/music/01.mp3"});
+                        }
+                        if (2==index){
+                            $(player).jPlayer("setMedia", {
+                                mp3: "lib/music/02.mp3"});
+                        }
+                        $("#player").jPlayer("play");
+                    }  
+                });
+            });
+            //月亮函数
+              $(function() {
+                $( "#moon" ).draggable({ containment: "parent" });
+              });
+	</script>
+	<style>
+		#tabs{
+                    background:white;
+                    width:400px;
+                    height:300px;
+                    right:50px;
+                    top:10px;
+		}
+		#tabs-1{
+                    color:#CD853F;
+                    height:300px;
+                    overflow-y:scroll;
+                    background:url(lib/img/bgimage.gif)
+		}
+		#tabs-2{
+                    height:300px;
+                    color:#FFD700;
+                    background:url(lib/img/bgimage.gif)
+		}		
+		#tabs-3{
+                    color:#FA8072;
+                    height:300px;
+                    background:url(lib/img/littleprince1.jpg);
+                    background-size:400px 400px;
+                    filter:alpha(opacity=80)
+		}
+		body{
+                    background:url(lib/img/bgimage.gif);
+                    width: 400px;
+		}
+	</style>
+</head>
+<body>
+<div id="tabs">
+        <h3>Love Letter</h3>
+	<div id="tabs-1" >
+		</br>
+		听说你最喜欢的数字是七，那今天可是你最喜欢的一天呢？</br>
+		虽然不知道这一天与往日有何不同。</br>
+		不过却莫名地一直惦念这一天是否有人曾陪你度过。</br>
+		那么我的这一天之所以特别，应该就是因为认识了你吧。</br>
+		</br>
+		说来会令人脸红，岂止是这一天，你过去的哪一天我都有所惦念。</br>
+		虽然过往的那些天里并没有我，可哪怕只是能在你回忆的角落里偷偷瞧上几眼也是我的心愿。</br>
+		想看你生来是怎样的笑容，如何就变得让我看着就情起意动。</br>
+		想看你童年是怎样的性格，如何就变得让我想着就辗转反侧。</br>
+		想看你上学是怎样的淘气，如何就变得让我听着就忍俊不禁。</br>
+		想看你上班是怎么的努力，如何就变得让我念着就心疼怜惜。</br>
+		</br>
+		相见恨晚，怨自己没有及时地出现在你面前。</br>
+		相见恨晚，怪自己未能更早地找到你的所在。</br>
+		发现那么多那么多的回忆里竟没有你的身影。</br>
+		发现小王子和天蝎座里的故事里竟没有你的角色。</br>
+		</br>
+		那些天里，小王子也曾因为小狐狸而伤心。</br>
+		不过也是狐狸让小王子明白了他的玫瑰为何独一无二。</br>
+		而从认识你的那一天起，发现我终于也从玫瑰园里找到了属于自己的玫瑰。</br>
+		</br>
+		那一刻，我开心地不得了。</br>
+		急急忙忙地把自己最大的秘密与你分享。</br>
+		可骄傲的小玫瑰呀，你显然不把这点小小秘密看得有多重。</br>
+		以至于我将珍贵的第二个愿望寄托在你身上的时候，你都有所嫌弃。</br>
+		毕竟我不是王子。</br>
+		</br>
+		也许是你明澈的眼睛看清我的真诚。</br>
+		也许是缘分劝慰你放下自己的骄傲。</br>
+		你竟允许我慢慢踏近你的生活。</br>
+		开心的同时，也满是感激，于是倍加努力。</br>
+		</br>
+		不知何时起，我已经如此靠近你。</br>
+		我想说，我们做朋友吧。</br>
+		我猜你会同意的。</br>
+		我们好像已经是朋友了，因为有些关系不说，大家都懂的。</br>
+		</br>
+		然而我却想做你的参谋长。</br>
+		“怎么小参谋都不能满足你呢？”</br>
+		因为只是朋友的我有些不甘，就算被说是贪婪我也情愿。</br>
+		请原谅我因你而变得有所贪婪。</br>
+		并不是贪婪参谋长的位高权重，而是想在你心里变得独一无二。</br>
+		藉此告诉你我的心愿。</br>
+		因为有些关系不说，总是暧昧的不会明了。</br>
+		就像，我对你的喜欢。</br>
+		</br>
+		</br>
+		By 小参谋</br>
+		2015.8.20 乙未 七夕</br>
+	</div>
+        <h3>Doraemon & Little Prince</h3>
+	<div id="tabs-2">
+		</br>
+		在这里介绍一下我的处女作吧~</br>
+		</br>
+		名字看标题就知道啦。</br>
+		那么音乐里一定要有小王子喽~</br>
+		所以我就为小王子编了一段新旋律。</br>
+		然后和ドラえもん的旋律编在了一起。</br>
+		稍微调整了一下节奏就是现在听起来的这个样子了。</br>
+		想小王子是个外国人，额，外星人，所以就特意弄的有些洋气。</br>
+		做的时间比较短，第一次也不是很熟练。</br>
+		音轨少，所以听起来有些单薄。</br>
+		不过也更像是童话吧。嘿嘿。</br>
+	</div>
+        <h3>Bye, Little Prince</h3>
+	<div id="tabs-3">
+		</br>
+		啦啦啦~这个是稍费了些心思的我的第二个作品。</br>
+		</br>
+		是个稍微有点伤心的作品。</br>
+		不过小王子总是开心的啦。</br>
+		所以除了结尾，大部分都还算愉快的感觉吧。</br>
+		这次用的时间比较长，用的乐器多了些，能稍微丰满了点儿。</br>
+		你感觉呢？</br>
+		</br>
+		其实想做的话还是蛮简单哒。</br>
+		希望自己老了之后，能做些好听的音乐留下来。</br>
+		不知道Honey愿不愿和我一起试试看哦？</br>
+	</div>
+</div>
+<img id="moon" src="lib/img/moon.png" style="height:100px;width:100px;bottom:0;position:absolute;" alt="moon"/>
+<div id="days" style="font-size:12px;right:10px;bottom:1px;position:absolute"></div>
+<script>
+	//日期函数
+	var date1=new Date(2015,1,4);
+	var date2=new Date();
+	var date3=date2.getTime()-date1.getTime();
+	var days=Math.ceil(date3/(24*3600*1000));
+	$("#days").html("Honey~ 今天是我们相识的第"+days+"天喽(*＾3＾*)❤ 吼吼吼♪");
+        
+        //播放器函数
+        $(document).ready(function(){
+         $("#player").jPlayer({
+          ready: function () {
+           $(this).jPlayer("setMedia", {
+            mp3: "lib/music/00.mp3"
+           }).jPlayer("play");
+          },
+          loop:true,
+          supplied: "mp3"
+         });        
+        });
+        
+</script>
+<div id="player"></div>
+</body>
+</html>
