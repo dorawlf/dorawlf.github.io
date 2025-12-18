@@ -22,12 +22,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%2010L12%206L26%2010L20%2014L6%2010Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.9%22%20%2F%3E%3Cpath%20d%3D%22M6%2010V22L12%2026V14L6%2010Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.7%22%20%2F%3E%3Cpath%20d%3D%22M12%2014V26L26%2022V10L12%2014Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.5%22%20%2F%3E%3Cpath%20d%3D%22M12%2014L26%2010L20%206L6%2010L12%2014Z%22%20stroke%3D%22white%22%20stroke-width%3D%221.5%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20stroke-linejoin%3D%22round%22%20%2F%3E%3C%2Fsvg%3E">
-
+href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%20fill%3D%22none%22%3E%3C!--%20%E5%B7%A6%E4%BE%A7%E9%A1%B5%E9%9D%A2%EF%BC%9A%E4%BD%BF%E7%94%A8%E7%B1%BB%E4%BC%BC%20bg-orange-200%20%E7%9A%84%E8%89%B2%E5%80%BC%20(%23FEEBC8)%20%E5%A1%AB%E5%85%85%20--%3E%3Cpath%20d%3D%22M4%2024C4%2024.7909%205.79086%2020%208%2020H16V28H8C5.79086%2028%204%2026.2091%204%2024Z%22%20fill%3D%22%23FEEBC8%22%20fill-opacity%3D%221%22%2F%3E%3C!--%20%E5%8F%B3%E4%BE%A7%E9%A1%B5%E9%9D%A2%EF%BC%9A%E5%8D%8A%E9%80%8F%E6%98%8E%E7%99%BD%E8%89%B2%E5%A1%AB%E5%85%85%20--%3E%3Cpath%20d%3D%22M16%2020H24C26.2091%2020%2028%2024.7909%2028%2024C28%2026.2091%2026.2091%2028%2024%2028H16V20Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.9%22%2F%3E%3C!--%20%E4%B8%BB%E4%B9%A6%E9%A1%B5%E7%BA%BF%E6%9D%A1%EF%BC%9A%E5%AE%9E%E7%BA%BF%20--%3E%3Cpath%20d%3D%22M16%2020C16%2014%2020%208%2022%206%22%20stroke%3D%22white%22%20stroke-width%3D%220.9%22%20stroke-linecap%3D%22round%22%20fill%3D%22%23FFFFFF%22%20fill-opacity%3D%221%22%2F%3E%3C%2Fsvg%3E">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>时光折页 (Time Folding)</title>
+    <title>时光折页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
@@ -190,15 +189,21 @@
             <div class="flex items-center gap-3">
                 <div
                     class="w-12 h-12 bg-orange-200 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 10L12 6L26 10L20 14L6 10Z" fill="white" fill-opacity="0.9" />
-                        <path d="M6 10V22L12 26V14L6 10Z" fill="white" fill-opacity="0.7" />
-                        <path d="M12 14V26L26 22V10L12 14Z" fill="white" fill-opacity="0.5" />
-                        <path d="M12 14L26 10L20 6L6 10L12 14Z" stroke="white" stroke-width="1.5"
-                            stroke-linejoin="round" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <!-- 左侧页面：使用类似 bg-orange-200 的色值 (#FEEBC8) 填充 -->
+                    <path d="M4 24C4 24.7909 5.79086 20 8 20H16V28H8C5.79086 28 4 26.2091 4 24Z" fill="#FEEBC8" fill-opacity="1"/>
+
+                    <!-- 右侧页面：半透明白色填充 -->
+
+                    <path d="M16 20H24C26.2091 20 28 24.7909 28 24C28 26.2091 26.2091 28 24 28H16V20Z" fill="white" fill-opacity="0.9"/>
+
+                    <!-- 主书页线条：实线 -->
+
+                    <path d="M16 20C16 14 20 8 22 6" stroke="white" stroke-width="0.9" stroke-linecap="round" fill="#FFFFFF" fill-opacity="1"/>
+
                     </svg>
                 </div>
-                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-800 leading-tight">
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-orange-300 leading-tight">
                     时光<br><span class="gradient-text">折页</span>
                 </h1>
             </div>
@@ -355,7 +360,7 @@
     <!-- Edit Modal -->
     <div id="editModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-95 flex flex-col max-h-[90vh]"
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all scale-95 flex flex-col max-h-[90vh]"
             id="modalContent">
             <div
                 class="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-shrink-0">
@@ -686,7 +691,7 @@
 
                 // Card Container
                 const card = document.createElement('div');
-                card.className = `rounded-lg border p-3 flex flex-col justify-between h-auto transition-shadow hover:shadow-md ${isCurrent ? 'bg-green-50 border-green-200 ring-2 ring-green-100' : 'bg-white border-gray-200'}`;
+                card.className = `rounded-lg border p-3 flex flex-col justify-between h-auto transition-shadow hover:shadow-md ${isCurrent ? 'bg-green-50 border-green-200 ring-2 ring-green-100' : 'bg-white border-orange-200'}`;
                 if (isPast) card.classList.add('bg-opacity-80');
 
                 // Context Text (Editable)
@@ -706,7 +711,7 @@
                     <div class="flex justify-between items-start mb-1">
                         <div>
                             <span class="text-lg font-bold text-gray-800">${year}</span>
-                            <span class="ml-1 text-xs px-1.5 py-0.5 rounded text-gray-600 bg-gray-100">
+                            <span class="ml-1 text-xs px-1.5 py-0.5 rounded text-gray-600 bg-orange-50">
                                 ${age}岁
                             </span>
                         </div>
@@ -755,7 +760,7 @@
                             if (actualSeasonIdx < currSeasonIdx) isCellPast = true;
                         }
 
-                        cell.style.backgroundColor = isCellPast ? '#F3F4F6' : '#FFFFFF';
+                        cell.style.backgroundColor = isCellPast ? '#FFF7ED' : '#FFFFFF';
                         cell.style.borderColor = '#E5E7EB';
                     }
 
@@ -1009,10 +1014,10 @@
             lifeProgressChartInstance = new Chart(progressCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['已度过', '剩余预期'],
+                    labels: ['已度过', '预期'],
                     datasets: [{
                         data: [yearsLived, remaining],
-                        backgroundColor: ['#FED7AA', '#e2e8f0'], // orange-200, Slate-200
+                        backgroundColor: ['#FED7AA', '#f7fee7'], // orange-200, lime-50
                         borderWidth: 0,
                         hoverOffset: 15
                     }]
