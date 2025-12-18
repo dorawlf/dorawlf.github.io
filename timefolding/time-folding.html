@@ -1,0 +1,1088 @@
+<!-- Chosen Palette: Warm Neutral & Calm Harmony (Background: #F9FAFB, Cards: #FFFFFF, Accents: #6366F1, #10B981, #F59E0B) -->
+<!-- Application Structure Plan:
+    1.  **Header & Configuration:** Top bar containing the core inputs (Birth Date, Life Expectancy) that drive the entire data generation. This allows immediate personalization.
+    2.  **Dashboard Overview (The "Analysis" Layer):** Before diving into the details, a dashboard section uses Chart.js to visualize "Life Progress" (Time Spent vs. Remaining) and "Event Categorization" (Distribution of tagged memories). This synthesizes the quantitative aspect of a life span.
+    3.  **The Life Grid (The "Exploration" Layer):** The core interface. A responsive grid where each item represents a 'Year'.
+        * **Year Card:** Displays Age, Gregorian Year, Zodiac AND Constellation.
+        * **Season Blocks:** Inside each year, 4 clickable quadrants. ORDER is dynamic based on birth season (e.g., if born in Summer, row starts with Summer).
+        * **Contextual Layers:** Editable "World Events" layer.
+    4.  **Interaction Flow:** User sets DOB -> Grid Generates -> User clicks a Season -> Modal appears (Edit Title, Content, Color, AND World Context) -> Save.
+    5.  **Storage:** Uses browser `localStorage` to persist data (Events, Settings, and World Context).
+-->
+<!-- Visualization & Content Choices:
+    1.  **Life Progress (Doughnut Chart):** Goal: Inform. Shows the finite nature of the configured lifespan.
+    2.  **Memory Distribution (Bar Chart):** Goal: Organize/Compare. Visualizes category distribution.
+    3.  **The Grid (Dynamic HTML/Tailwind):** Goal: Organize & Change. 
+        - **UPDATED:** Rows start from birth season.
+        - **UPDATED:** Cells show Titles.
+    4.  **World Context (Text Injection):** Goal: Inform & Edit. Now editable via the modal.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%2010L12%206L26%2010L20%2014L6%2010Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.9%22%20%2F%3E%3Cpath%20d%3D%22M6%2010V22L12%2026V14L6%2010Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.7%22%20%2F%3E%3Cpath%20d%3D%22M12%2014V26L26%2022V10L12%2014Z%22%20fill%3D%22white%22%20fill-opacity%3D%220.5%22%20%2F%3E%3Cpath%20d%3D%22M12%2014L26%2010L20%206L6%2010L12%2014Z%22%20stroke%3D%22white%22%20stroke-width%3D%221.5%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20stroke-linejoin%3D%22round%22%20%2F%3E%3C%2Fsvg%3E">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时光折页 (Time Folding)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #eedccd;
+            --primary-glow: rgba(71, 85, 105, 0.2);
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --season-border: rgba(0, 0, 0, 0.04);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            --hover-shadow: 0 20px 25px -5px rgba(71, 85, 105, 0.1), 0 10px 10px -5px rgba(71, 85, 105, 0.04);
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(71, 85, 105, 0.03) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(51, 65, 85, 0.03) 0px, transparent 50%);
+            color: #4f1519b7;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--card-shadow);
+        }
+
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        .season-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            min-height: 140px;
+        }
+
+        .season-cell {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            overflow-y: auto;
+            text-align: left;
+            padding: 8px;
+            min-height: 90px;
+            border-radius: 12px;
+            border: 1px solid var(--season-border);
+            background: white;
+        }
+
+        .season-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+            z-index: 2;
+        }
+
+        .event-title-tag {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            padding: 2px 6px;
+            margin-bottom: 4px;
+            font-weight: 600;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 0.7rem;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .year-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+        }
+
+        .year-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), #1e293b49);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #modalContent {
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--primary-glow);
+            border: 2px solid white;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar / Header -->
+    <header class="navbar-glass sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-12 h-12 bg-orange-200 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 10L12 6L26 10L20 14L6 10Z" fill="white" fill-opacity="0.9" />
+                        <path d="M6 10V22L12 26V14L6 10Z" fill="white" fill-opacity="0.7" />
+                        <path d="M12 14V26L26 22V10L12 14Z" fill="white" fill-opacity="0.5" />
+                        <path d="M12 14L26 10L20 6L6 10L12 14Z" stroke="white" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-800 leading-tight">
+                    时光<br><span class="gradient-text">折页</span>
+                </h1>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-4 text-sm">
+                <button onclick="exportData()" title="导出数据"
+                    class="bg-slate-100 text-slate-700 w-9 h-9 sm:w-10 sm:h-10 rounded-xl font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </button>
+                <button onclick="document.getElementById('importFile').click()" title="导入数据"
+                    class="bg-slate-100 text-slate-700 w-9 h-9 sm:w-10 sm:h-10 rounded-xl font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                </button>
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                <button id="resetDataBtn" title="重置数据"
+                    class="text-slate-400 hover:text-red-500 transition-colors w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+                <div class="bg-orange-200 text-white px-3 py-2 sm:px-4 rounded-2xl font-bold shadow-lg shadow-slate-200 text-xs sm:text-sm whitespace-nowrap"
+                    id="currentAgeDisplay">
+                    计算中...
+                </div>
+            </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- 1. Introduction & Configuration Section -->
+        <section class="glass-card rounded-[2rem] p-8">
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold text-slate-900 mb-2">定制你的时光折页</h2>
+                <p class="text-slate-500 text-sm leading-relaxed max-w-2xl">
+                    定义人生的起跑线和预期终点。系统将根据你的出生日期自动生成时间网格。
+                    彩色方块代表已流逝的时间，空白画布代表无限可能的未来。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+                        <span>出生日期</span>
+                        <span id="constellationDisplay" class="text-xs text-slate-500 font-semibold"></span>
+                    </label>
+                    <input type="date" id="birthDateInput"
+                        class="w-full border-gray-300 rounded-md shadow-sm focus:border-slate-500 focus:ring-slate-500 p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">预期寿命 (年)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="lifeExpectancyInput" min="60" max="120" value="80"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <span id="lifeExpectancyValue"
+                            class="text-sm font-mono text-gray-900 w-12 text-center">80</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">每行显示年份</label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="yearsPerRowInput" min="1" max="5" value="1"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <span id="yearsPerRowValue" class="text-sm font-mono text-gray-900 w-12 text-center">1</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 pt-2">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="showZodiacToggle" class="sr-only peer" checked>
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-600 relative">
+                        </div>
+                        <span class="ml-3 text-sm font-medium text-gray-700">显示生肖</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Dashboard / Analytics Section -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Life Progress Chart -->
+            <div class="glass-card rounded-[2rem] p-8 flex flex-col">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-900">人生进度概览</h3>
+                    <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
+                        基于当前配置的时间流逝比例
+                    </p>
+                </div>
+                <div class="flex-grow flex items-center justify-center">
+                    <div class="chart-container">
+                        <canvas id="lifeProgressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Categories Chart -->
+            <div class="glass-card rounded-[2rem] p-8 flex flex-col">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-900">记忆分类统计</h3>
+                    <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
+                        在人生网格中记录的各类事件分布
+                    </p>
+                </div>
+                <div class="flex-grow flex items-center justify-center">
+                    <div class="chart-container">
+                        <canvas id="eventDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. The Life Grid Section -->
+        <section>
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                <div>
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tight mb-2">你的时间轴</h2>
+                    <p class="text-sm text-slate-500 max-w-xl">
+                        每一个卡片代表一岁，每一小格代表一个季度（由出生季节开始排列）。
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        <span class="w-4 h-4 bg-slate-500/10 rounded-lg border border-slate-500/20"></span> 过去
+                        <span class="w-4 h-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20 ml-2"></span> 现在
+                        <span class="w-4 h-4 bg-white rounded-lg border border-slate-200 ml-2"></span> 未来
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-2 mb-6" id="tagFilters">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Grid Container -->
+            <div id="lifeGrid"
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- Grid Items Generated via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm">© 2025 时光折页 (Time Folding). 基于Dorawlf创意构建。</p>
+        </div>
+    </footer>
+
+    <!-- Edit Modal -->
+    <div id="editModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-95 flex flex-col max-h-[90vh]"
+            id="modalContent">
+            <div
+                class="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-shrink-0">
+                <h3 class="text-xl font-bold text-slate-900" id="modalTitle">编辑记录</h3>
+                <button onclick="closeModal()"
+                    class="w-10 h-10 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 transition-colors flex items-center justify-center font-bold text-xl">×</button>
+            </div>
+
+            <div class="p-8 space-y-6 overflow-y-auto flex-grow" id="modalBody">
+
+                <!-- World Context Edit -->
+                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 mb-2">
+                    <label class="block text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">🌍 当年历史背景
+                        (可编辑):</label>
+                    <input type="text" id="modalWorldContextInput"
+                        class="w-full text-xs text-slate-700 bg-white border-slate-200 rounded-2xl px-4 py-2.5 focus:ring-2 focus:ring-slate-400 outline-none border transition-all"
+                        placeholder="例如：奥运会举办...">
+                </div>
+
+                <hr class="border-slate-100/50">
+
+                <!-- Event List Area -->
+                <div id="eventListArea" class="space-y-4">
+                    <!-- Existing events will be listed here with Edit/Delete -->
+                </div>
+
+                <div id="addNewEventArea" class="bg-slate-50/50 rounded-[2rem] p-8 border border-slate-100">
+                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-6" id="formHeader">添加新记录
+                    </h4>
+                    <div class="space-y-5">
+                        <!-- Event Title -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 ml-1">标题</label>
+                            <input type="text" id="eventTitle"
+                                class="w-full border-slate-200 rounded-2xl focus:border-slate-500 focus:ring-4 focus:ring-slate-100 p-4 border outline-none transition-all placeholder:text-slate-300 text-sm"
+                                placeholder="输入简短标题...">
+                        </div>
+
+                        <!-- Event Content -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 ml-1">详细内容</label>
+                            <textarea id="eventContent" rows="3"
+                                class="w-full border-slate-200 rounded-2xl focus:border-slate-500 focus:ring-4 focus:ring-slate-100 p-4 border outline-none transition-all placeholder:text-slate-300 text-sm"
+                                placeholder="记录这一刻的各种细节..."></textarea>
+                        </div>
+
+                        <!-- Category/Color Selection -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-4 ml-1">分类标签</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="colorPicker">
+                                <!-- Colors generated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 pt-4">
+                            <button id="mainSubmitBtn" onclick="handleEventSubmit()"
+                                class="flex-grow px-8 py-4 text-sm font-bold text-white bg-orange-200 rounded-2xl hover:bg-slate-800 shadow-xl shadow-slate-100 transition-all transform active:scale-95">
+                                保存记录
+                            </button>
+                            <button id="cancelEditBtn" onclick="resetFormState()"
+                                class="hidden px-8 py-4 text-sm font-bold text-slate-500 bg-slate-200 rounded-2xl hover:bg-slate-300 transition-all">
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-8 py-5 bg-slate-50/80 flex justify-end gap-4 flex-shrink-0 border-t border-slate-100">
+                <button onclick="closeModal()"
+                    class="px-10 py-4 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all active:scale-95 shadow-sm">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        /**
+         * Core Application State & Constants
+         */
+        const CATEGORIES = [
+            { id: 'default', name: '无', color: '#FFFFFF', border: '#E5E7EB' },
+            { id: 'personal', name: '个人/成长', color: '#FEE2E2', border: '#FCA5A5' }, // Red-100
+            { id: 'career', name: '工作/学业', color: '#DBEAFE', border: '#93C5FD' },   // Blue-100
+            { id: 'family', name: '家庭/亲友', color: '#FEF3C7', border: '#FCD34D' },   // Amber-100
+            { id: 'travel', name: '旅行/探索', color: '#D1FAE5', border: '#6EE7B7' },   // Emerald-100
+            { id: 'health', name: '健康/运动', color: '#F3E8FF', border: '#D8B4FE' },   // Purple-100
+            { id: 'milestone', name: '里程碑', color: '#FFEDD5', border: '#FDBA74' }    // Orange-100
+        ];
+
+        // Standard Season Order (used for calculation)
+        // 0: Winter, 1: Spring, 2: Summer, 3: Autumn
+        const SEASON_NAMES = ['冬', '春', '夏', '秋'];
+
+        const ZODIACS = ['🐭 鼠', '🐮 牛', '🐯 虎', '🐰 兔', '🐲 龙', '🐍 蛇', '🐴 马', '🐑 羊', '🐵 猴', '🐔 鸡', '🐶 狗', '🐷 猪'];
+
+        // Initial Default World Events (1960-2025)
+        const DEFAULT_WORLD_CONTEXT = {
+            1960: "非洲独立年, 激光器问世",
+            1961: "加加林进入太空, 柏林墙建立",
+            1962: "古巴导弹危机, 披头士首张单曲",
+            1963: "肯尼迪遇刺, 第一颗同步通信卫星",
+            1964: "第一颗原子弹爆炸(中), 披头士席卷美洲",
+            1965: "列昂诺夫首次太空行走, 第一例人工合成胰岛素(中)",
+            1966: "文革开始, 文化交流暂停",
+            1967: "第一颗氢弹爆炸(中), 世界上首例心脏移植手术",
+            1968: "阿波罗8号绕月, 美国马丁·路德·金遇刺",
+            1969: "阿波罗11号登月, ARPANET(互联网前身)诞生",
+            1970: "东方红一号发射(中), 首个世界地球日",
+            1971: "中国恢复联合国席位, 微处理器Intel 4004发布",
+            1972: "尼克松访华, 慕尼黑惨案",
+            1973: "第一次石油危机, 美国从越南撤军",
+            1974: "秦兵马俑被发现, 第一台个人电脑Altair 8800",
+            1975: "比尔·盖茨创立微软, 越南战争结束",
+            1976: "唐山大地震, 乔布斯创立苹果",
+            1977: "《星球大战》首映, 第一台量产个人电脑Apple II",
+            1978: "改革开放开始, 索尼Walkman问世",
+            1979: "中美正式建交, 伊朗人质危机",
+            1980: "深圳特区建立, 莫斯科奥运会",
+            1981: "IBM PC发布, 世界上首例艾滋病诊断",
+            1982: "马岛战争, 第一张CD碟片问世",
+            1983: "互联网协议TCP/IP启用, 第一个移动电话摩托罗拉8000X",
+            1984: "乔布斯发布Macintosh, 中英签署关于香港问题的联合声明",
+            1985: "第一版Windows系统发布, 广场协议签署",
+            1986: "切尔诺贝利核电站事故, 哈雷彗星回归",
+            1987: "首款移动电话进入中国, 1019黑色星期一金融危机",
+            1988: "中国首枚南极考察站落成, 互联网蠕虫病毒首次爆发",
+            1989: "柏林墙倒塌, 万维网(WWW)概念提出",
+            1990: "海湾战争开始, 浦东开发开放",
+            1991: "苏联解体, Linux内核首个版本发布",
+            1992: "邓小平南方谈话, 巴塞罗那奥运会",
+            1993: "《侏罗纪公园》上映, 欧盟正式成立",
+            1994: "中国接入国际互联网, 南非结束种族隔离运动",
+            1995: "京九铁路全线铺通, 亚马逊/eBay相继成立",
+            1996: "克隆羊多莉诞生, 亚特兰大奥运会",
+            1997: "香港回归, 深蓝击败国际象棋冠军卡斯帕罗夫",
+            1998: "曼谷亚运会, 谷歌公司正式成立",
+            1999: "澳门回归, 欧元正式启动",
+            2000: "千禧年, 中国北斗卫星导航试验系统在轨",
+            2001: "加入WTO, 北京申奥成功, 911事件",
+            2002: "中国首次参加世界杯, 欧元正式流通",
+            2003: "神舟五号载人飞行成功, 伊拉克战争开始",
+            2004: "社交网络Facebook创立, 雅典奥运会",
+            2005: "青藏铁路铺通, YouTube成立",
+            2006: "三峡大坝全线建成, 冥王星被剔除行星行列",
+            2007: "初代iPhone发布, 嫦娥一号发射",
+            2008: "北京奥运会举办, 全球金融海啸",
+            2009: "新中国成立60周年, 阿凡达开启3D电影时代",
+            2010: "上海世博会, 中国成为世界第二大经济体",
+            2011: "利比亚战争, 乔布斯逝世",
+            2012: "伦敦奥运会, 莫言获得诺贝尔文学奖",
+            2013: "“一带一路”倡议提出, 嫦娥三号实现月面软着陆",
+            2014: "移动支付元年, 阿里巴巴在纽交所上市",
+            2015: "屠呦呦获诺贝尔和平奖, 引力波首次被直接探测到",
+            2016: "中国高铁里程突破2万公里, 英国脱欧公投",
+            2017: "国产客机C919首飞成功, Alphago击败柯洁",
+            2018: "港珠澳大桥通车, 俄罗斯世界杯",
+            2019: "嫦娥四号登陆月球背面, 5G正式商用, 庆祝新中国成立70周年",
+            2020: "火星探测器天问一号发射, 全球协同抗击疫情",
+            2021: "中国空间站核心舱发射成功, 东京奥运会",
+            2022: "北京冬奥会举办, 卡塔尔世界杯, 中国人口首次负增长",
+            2023: "ChatGPT引发AI风暴, 杭州亚运会",
+            2024: "嫦娥六号月背采样返回, 巴黎奥运会, AI领域技术爆发",
+            2025: "首个人工智能大模型深入各行各业, 登月计划进一步推进"
+        };
+
+        let appState = {
+            birthDate: localStorage.getItem('lifeMap_dob') || '1994-10-08',
+            lifeExpectancy: parseInt(localStorage.getItem('lifeMap_expectancy')) || 100,
+            yearsPerRow: parseInt(localStorage.getItem('lifeMap_yearsPerRow')) || 2, // New Setting
+            showZodiac: localStorage.getItem('lifeMap_showZodiac') !== 'false',
+            events: JSON.parse(localStorage.getItem('lifeMap_events')) || {}, // Key: "YYYY-SeasonIdx", Value: [{title, content, category}, ...]
+            worldContext: JSON.parse(localStorage.getItem('lifeMap_context')) || DEFAULT_WORLD_CONTEXT,
+            editingCell: null, // { year: 1995, seasonIdx: 0 }
+            editingEventIndex: null // null for new, index for existing
+        };
+
+        // --- Data Migration (Old Single Record -> Array) ---
+        (function migrateData() {
+            let changed = false;
+            for (let key in appState.events) {
+                if (!Array.isArray(appState.events[key])) {
+                    appState.events[key] = [appState.events[key]];
+                    changed = true;
+                }
+            }
+            if (changed) localStorage.setItem('lifeMap_events', JSON.stringify(appState.events));
+        })();
+
+        // Charts Instances
+        let lifeProgressChartInstance = null;
+        let eventDistributionChartInstance = null;
+
+        /**
+         * Initialization
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            initUI();
+            renderApp();
+
+            // Event Listeners for inputs
+            document.getElementById('birthDateInput').addEventListener('change', (e) => {
+                appState.birthDate = e.target.value;
+                saveSettings();
+                renderApp();
+            });
+
+            document.getElementById('lifeExpectancyInput').addEventListener('input', (e) => {
+                appState.lifeExpectancy = parseInt(e.target.value);
+                document.getElementById('lifeExpectancyValue').innerText = appState.lifeExpectancy;
+                saveSettings();
+                renderApp();
+            });
+
+            document.getElementById('yearsPerRowInput').addEventListener('input', (e) => {
+                appState.yearsPerRow = parseInt(e.target.value);
+                document.getElementById('yearsPerRowValue').innerText = appState.yearsPerRow;
+                saveSettings();
+                renderApp();
+            });
+
+            document.getElementById('showZodiacToggle').addEventListener('change', (e) => {
+                appState.showZodiac = e.target.checked;
+                saveSettings();
+                renderApp();
+            });
+
+            document.getElementById('resetDataBtn').addEventListener('click', () => {
+                if (confirm('确定要清除所有记录吗？此操作无法撤销。')) {
+                    localStorage.removeItem('lifeMap_events');
+                    localStorage.removeItem('lifeMap_context'); // Optional: reset context?
+                    appState.events = {};
+                    appState.worldContext = { ...DEFAULT_WORLD_CONTEXT };
+                    renderApp();
+                }
+            });
+        });
+
+        function initUI() {
+            document.getElementById('birthDateInput').value = appState.birthDate;
+            document.getElementById('lifeExpectancyInput').value = appState.lifeExpectancy;
+            document.getElementById('lifeExpectancyValue').innerText = appState.lifeExpectancy;
+            document.getElementById('yearsPerRowInput').value = appState.yearsPerRow;
+            document.getElementById('yearsPerRowValue').innerText = appState.yearsPerRow;
+            document.getElementById('showZodiacToggle').checked = appState.showZodiac;
+
+            const picker = document.getElementById('colorPicker');
+            picker.innerHTML = CATEGORIES.map(cat => `
+                <button onclick="selectCategory('${cat.id}')" 
+                    class="flex items-center gap-2 p-1.5 rounded-md border text-xs hover:bg-gray-50 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    style="border-color: ${cat.border};"
+                    title="${cat.name}"
+                    data-cat-id="${cat.id}">
+                    <span class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: ${cat.color}; border: 1px solid ${cat.border};"></span>
+                    <span class="truncate">${cat.name}</span>
+                </button>
+            `).join('');
+        }
+
+        function saveSettings() {
+            localStorage.setItem('lifeMap_dob', appState.birthDate);
+            localStorage.setItem('lifeMap_expectancy', appState.lifeExpectancy);
+            localStorage.setItem('lifeMap_yearsPerRow', appState.yearsPerRow);
+            localStorage.setItem('lifeMap_showZodiac', appState.showZodiac);
+        }
+
+        /**
+         * Helpers
+         */
+        function getConstellation(month, day) {
+            const dates = [20, 19, 21, 20, 21, 22, 23, 23, 23, 24, 22, 22];
+            const constellations = ["摩羯", "水瓶", "双鱼", "白羊", "金牛", "双子", "巨蟹", "狮子", "处女", "天秤", "天蝎", "射手", "摩羯"];
+            return day < dates[month - 1] ? constellations[month - 1] : constellations[month];
+        }
+
+        // Determine Start Season based on Birth Month
+        // Winter: 12, 1, 2 -> Index 0
+        // Spring: 3, 4, 5 -> Index 1
+        // Summer: 6, 7, 8 -> Index 2
+        // Autumn: 9, 10, 11 -> Index 3
+        function getBirthSeasonIndex(month) {
+            if (month >= 3 && month <= 5) return 1;
+            if (month >= 6 && month <= 8) return 2;
+            if (month >= 9 && month <= 11) return 3;
+            return 0;
+        }
+
+        /**
+         * Core Logic: Render the Entire App
+         */
+        function renderApp() {
+            const gridContainer = document.getElementById('lifeGrid');
+            gridContainer.innerHTML = ''; // Clear
+
+            // Apply dynamic grid columns
+            gridContainer.style.gridTemplateColumns = `repeat(${appState.yearsPerRow}, minmax(0, 1fr))`;
+
+            const dob = new Date(appState.birthDate);
+            const startYear = dob.getFullYear();
+            const startMonth = dob.getMonth() + 1; // 1-12
+            const startDay = dob.getDate();
+            const currentYear = new Date().getFullYear();
+
+            // Calculate Stats
+            let totalYears = appState.lifeExpectancy;
+            let yearsLived = currentYear - startYear;
+            if (yearsLived < 0) yearsLived = 0;
+            if (yearsLived > totalYears) yearsLived = totalYears;
+
+            document.getElementById('currentAgeDisplay').innerText = `当前年龄: ${yearsLived} 岁`;
+
+            // Identify the Rotation based on Birth Season
+            const startSeasonIdx = getBirthSeasonIndex(startMonth);
+
+            // Set Constellation in Header
+            const constellation = getConstellation(startMonth, startDay);
+            document.getElementById('constellationDisplay').innerText = appState.showZodiac ? `✨ ${constellation}座` : '';
+
+            // --- Render Grid ---
+            for (let i = 0; i <= totalYears; i++) {
+                const year = startYear + i;
+                const age = i;
+                const zodiacIndex = (year - 4) % 12;
+                const zodiac = ZODIACS[zodiacIndex < 0 ? zodiacIndex + 12 : zodiacIndex];
+
+                const isPast = year < currentYear;
+                const isCurrent = year === currentYear;
+
+                // Card Container
+                const card = document.createElement('div');
+                card.className = `rounded-lg border p-3 flex flex-col justify-between h-auto transition-shadow hover:shadow-md ${isCurrent ? 'bg-green-50 border-green-200 ring-2 ring-green-100' : 'bg-white border-gray-200'}`;
+                if (isPast) card.classList.add('bg-opacity-80');
+
+                // Context Text (Editable)
+                const contextVal = appState.worldContext[year];
+                const contextHtml = contextVal
+                    ? `<div class="text-[10px] text-gray-500 mt-1 truncate border-b border-gray-100 pb-1 mb-1" title="${contextVal}">🌍 ${contextVal}</div>`
+                    : `<div class="h-1 mb-1"></div>`; // spacer
+
+                // Header Info
+                const zodiacDisplay = appState.showZodiac
+                    ? `<div class="flex flex-col items-end justify-center">
+                         <span class="text-xs text-gray-500" title="生肖">${zodiac}</span>
+                       </div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <div>
+                            <span class="text-lg font-bold text-gray-800">${year}</span>
+                            <span class="ml-1 text-xs px-1.5 py-0.5 rounded text-gray-600 bg-gray-100">
+                                ${age}岁
+                            </span>
+                        </div>
+                        ${zodiacDisplay}
+                    </div>
+                    ${contextHtml}
+                    <div class="season-grid">
+                        <!-- Seasons injected here -->
+                    </div>
+                `;
+
+                // Render 4 Seasons (Rotated)
+                const seasonGrid = card.querySelector('.season-grid');
+
+                for (let s = 0; s < 4; s++) {
+                    const actualSeasonIdx = (startSeasonIdx + s) % 4;
+                    const seasonName = SEASON_NAMES[actualSeasonIdx];
+
+                    const eventKey = `${year}-${actualSeasonIdx}`;
+                    const eventsArr = appState.events[eventKey] || [];
+
+                    const cell = document.createElement('div');
+                    cell.className = 'season-cell rounded border text-gray-500';
+
+                    // Inner Content
+                    let cellContent = `<span class="text-[9px] font-bold opacity-60 mb-1">${seasonName}季</span>`;
+
+                    if (eventsArr.length > 0) {
+
+                        const firstCat = CATEGORIES.find(c => c.id === eventsArr[0].category) || CATEGORIES[0];
+                        cell.style.backgroundColor = firstCat.color;
+                        cell.style.borderColor = firstCat.border;
+                        cell.classList.add('text-gray-800');
+
+                        eventsArr.forEach(evt => {
+                            if (evt.title) {
+                                cellContent += `<div class="event-title-tag">${evt.title}</div>`;
+                            }
+                        });
+                    } else {
+                        const currMonth = new Date().getMonth() + 1;
+                        const currSeasonIdx = getBirthSeasonIndex(currMonth);
+                        let isCellPast = false;
+                        if (year < currentYear) isCellPast = true;
+                        else if (year === currentYear) {
+                            if (actualSeasonIdx < currSeasonIdx) isCellPast = true;
+                        }
+
+                        cell.style.backgroundColor = isCellPast ? '#F3F4F6' : '#FFFFFF';
+                        cell.style.borderColor = '#E5E7EB';
+                    }
+
+                    cell.innerHTML = cellContent;
+                    cell.onclick = () => openModal(year, actualSeasonIdx);
+                    seasonGrid.appendChild(cell);
+                }
+
+                gridContainer.appendChild(card);
+            }
+
+            // --- Update Charts ---
+            updateCharts(yearsLived, totalYears);
+        }
+
+        /**
+         * Modal & Data Handling
+         */
+        let currentModalSelection = { categoryId: 'default' };
+
+        function openModal(year, seasonIdx) {
+            appState.editingCell = { year, seasonIdx };
+            const key = `${year}-${seasonIdx}`;
+
+            // Set Titles/Inputs
+            document.getElementById('modalTitle').innerText = `${year}年 - ${SEASON_NAMES[seasonIdx]}季`;
+            document.getElementById('modalWorldContextInput').value = appState.worldContext[year] || '';
+
+            refreshModalEventList();
+            resetFormState();
+
+            // Show
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.firstElementChild.classList.remove('scale-95');
+                modal.firstElementChild.classList.add('scale-100');
+            }, 10);
+        }
+
+        function refreshModalEventList() {
+            const { year, seasonIdx } = appState.editingCell;
+            const key = `${year}-${seasonIdx}`;
+            const events = appState.events[key] || [];
+            const area = document.getElementById('eventListArea');
+
+            if (events.length === 0) {
+                area.innerHTML = `<p class="text-xs text-gray-400 italic">暂无记录</p>`;
+                return;
+            }
+
+            area.innerHTML = `<h4 class="text-sm font-bold text-gray-800">已记录内容 (${events.length})</h4>` +
+                events.map((evt, idx) => {
+                    const cat = CATEGORIES.find(c => c.id === evt.category) || CATEGORIES[0];
+                    return `
+                        <div class="p-2 border rounded bg-gray-50 flex justify-between items-start gap-2">
+                            <div class="flex-grow overflow-hidden">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="w-3 h-3 rounded-full" style="background-color: ${cat.color}; border: 1px solid ${cat.border};"></span>
+                                    <span class="font-bold text-sm truncate">${evt.title || '(无标题)'}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 line-clamp-2">${evt.content || '(无详情)'}</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="enterEditMode(${idx})" class="text-indigo-500 hover:text-indigo-700 text-xs font-medium">编辑</button>
+                                <button onclick="deleteEvent(${idx})" class="text-red-400 hover:text-red-600 text-xs">删除</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        function enterEditMode(idx) {
+            const { year, seasonIdx } = appState.editingCell;
+            const event = appState.events[`${year}-${seasonIdx}`][idx];
+
+            appState.editingEventIndex = idx;
+
+            // Populate Form
+            document.getElementById('eventTitle').value = event.title;
+            document.getElementById('eventContent').value = event.content;
+            selectCategory(event.category);
+
+            // Update UI
+            document.getElementById('formHeader').innerText = '修改当前记录';
+            document.getElementById('mainSubmitBtn').innerText = '确认修改';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            // Scroll to form
+            document.getElementById('addNewEventArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetFormState() {
+            appState.editingEventIndex = null;
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventContent').value = '';
+            selectCategory('default');
+
+            document.getElementById('formHeader').innerText = '添加新记录';
+            document.getElementById('mainSubmitBtn').innerText = '添加到该季度';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        function handleEventSubmit() {
+            const { year, seasonIdx } = appState.editingCell;
+            const title = document.getElementById('eventTitle').value.trim();
+            const content = document.getElementById('eventContent').value.trim();
+            const category = currentModalSelection.categoryId;
+            const newContext = document.getElementById('modalWorldContextInput').value.trim();
+
+            if (!title && !content) {
+                alert('请输入标题或内容');
+                return;
+            }
+
+            const key = `${year}-${seasonIdx}`;
+
+            if (appState.editingEventIndex === null) {
+                // Add New
+                if (!appState.events[key]) appState.events[key] = [];
+                appState.events[key].push({ title, content, category });
+            } else {
+                // Update Existing
+                appState.events[key][appState.editingEventIndex] = { title, content, category };
+            }
+
+            // Save context
+            if (newContext) appState.worldContext[year] = newContext;
+
+            saveAndSync();
+            refreshModalEventList();
+            resetFormState();
+        }
+
+        function deleteEvent(idx) {
+            const { year, seasonIdx } = appState.editingCell;
+            const key = `${year}-${seasonIdx}`;
+            if (appState.events[key]) {
+                appState.events[key].splice(idx, 1);
+                if (appState.events[key].length === 0) delete appState.events[key];
+
+                // If we were editing this specific one, reset form
+                if (appState.editingEventIndex === idx) resetFormState();
+                else if (appState.editingEventIndex > idx) appState.editingEventIndex--;
+
+                saveAndSync();
+                refreshModalEventList();
+            }
+        }
+
+        function saveAndSync() {
+            localStorage.setItem('lifeMap_events', JSON.stringify(appState.events));
+            localStorage.setItem('lifeMap_context', JSON.stringify(appState.worldContext));
+            renderApp();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('editModal');
+            modal.firstElementChild.classList.remove('scale-100');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+            appState.editingCell = null;
+        }
+
+        function selectCategory(id) {
+            currentModalSelection.categoryId = id;
+            const btns = document.getElementById('colorPicker').children;
+            for (let btn of btns) {
+                if (btn.dataset.catId === id) {
+                    btn.classList.add('ring-2', 'ring-slate-500', 'bg-slate-50', 'border-slate-200');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-slate-500', 'bg-slate-50', 'border-slate-200');
+                }
+            }
+        }
+
+        // --- Data Portability: Import / Export ---
+
+        function exportData() {
+            const dataToExport = {
+                birthDate: appState.birthDate,
+                lifeExpectancy: appState.lifeExpectancy,
+                yearsPerRow: appState.yearsPerRow,
+                showZodiac: appState.showZodiac,
+                events: appState.events,
+                worldContext: appState.worldContext,
+                version: "1.0"
+            };
+
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timefolding_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+
+                    // Simple Validation
+                    if (!imported.events || !imported.birthDate) {
+                        throw new Error("格式不正确，缺少关键数据");
+                    }
+
+                    // Update State
+                    appState.birthDate = imported.birthDate;
+                    appState.lifeExpectancy = imported.lifeExpectancy || 80;
+                    appState.yearsPerRow = imported.yearsPerRow || 1;
+                    appState.showZodiac = imported.showZodiac !== false;
+                    appState.events = imported.events;
+                    appState.worldContext = imported.worldContext || { ...DEFAULT_WORLD_CONTEXT };
+
+                    // Save and Reload
+                    saveSettings();
+                    saveAndSync();
+                    initUI();
+
+                    alert("导入成功！");
+                } catch (err) {
+                    alert("导入失败: " + err.message);
+                }
+                // Clear input
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // Removed old single-save function in favor of saveAndSync and addNewEventToList
+
+        /**
+         * Chart Logic
+         */
+        function updateCharts(yearsLived, totalYears) {
+            // 1. Life Progress (Doughnut)
+            const progressCtx = document.getElementById('lifeProgressChart').getContext('2d');
+            const remaining = totalYears - yearsLived;
+
+            if (lifeProgressChartInstance) lifeProgressChartInstance.destroy();
+            lifeProgressChartInstance = new Chart(progressCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已度过', '剩余预期'],
+                    datasets: [{
+                        data: [yearsLived, remaining],
+                        backgroundColor: ['#FED7AA', '#e2e8f0'], // orange-200, Slate-200
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { family: 'Outfit', weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.label || '';
+                                    if (label) label += ': ';
+                                    let val = context.parsed;
+                                    let pct = Math.round((val / totalYears) * 100);
+                                    return `${label}${val}年 (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '80%'
+                }
+            });
+
+            // 2. Event Distribution (Bar)
+            const distCtx = document.getElementById('eventDistributionChart').getContext('2d');
+            const counts = {};
+            CATEGORIES.forEach(c => { if (c.id !== 'default') counts[c.name] = 0; });
+
+            Object.values(appState.events).forEach(evtArr => {
+                evtArr.forEach(evt => {
+                    const cat = CATEGORIES.find(c => c.id === evt.category);
+                    if (cat && cat.id !== 'default') {
+                        counts[cat.name] = (counts[cat.name] || 0) + 1;
+                    }
+                });
+            });
+
+            if (eventDistributionChartInstance) eventDistributionChartInstance.destroy();
+            eventDistributionChartInstance = new Chart(distCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        label: '记录数量',
+                        data: Object.values(counts),
+                        backgroundColor: Object.keys(counts).map(name => {
+                            const cat = CATEGORIES.find(c => c.name === name);
+                            return cat ? cat.color : '#cbd5e1';
+                        }),
+                        borderRadius: 12,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1, font: { family: 'Outfit' } } },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Outfit', weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+
+</html>
